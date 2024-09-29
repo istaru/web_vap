@@ -14,6 +14,7 @@ import demoConfig from './demo1.json'
 import demo2Config from './demo2.json'
 const demoMp4 = require('./demo1.mp4')
 const demo2Mp4 = require('./demo2.mp4')
+var TAG = 'vue端log：'
 
 export default {
   name: 'vap',
@@ -38,10 +39,14 @@ export default {
     this.vap = new Vap()
   },
   mounted () {
+    window.handleFlutterData = this.handleFlutterData
     // 网页加载完毕时，自动调用 play 方法
     this.play(0) // 传入参数 0 表示无融合播放
   },
   methods: {
+    handleFlutterData (event) {
+      console.log(TAG, '接收的参数为：', event)
+    },
     getPlayParams () {
       return {
         container: this.$refs.anim,
@@ -68,6 +73,8 @@ export default {
       }
       const that = this
       const params = this.getPlayParams()
+      // 记录开始播放时间
+      const startTime = performance.now()
       this.vap.play(Object.assign({}, params, flag ? this.fusionInfo : {type: 1}))
         .on('playing', () => {
           that.access = false
@@ -77,6 +84,10 @@ export default {
           that.access = true
           // this.vap = null
           // console.log('play ended')
+          // 记录结束播放时间
+          const endTime = performance.now()
+          const duration = endTime - startTime
+          console.log(TAG, '动画耗时：', duration, '毫秒')
           if (type !== 'demo2') {
             this.changeConfig(demo2Mp4, demo2Config, 'demo2 textUser', 'demo2 textAnchor')
             this.play(flag, 'demo2')
@@ -126,8 +137,16 @@ export default {
 
 <!-- Add "scoped" attribute to limit CSS to this component only -->
 <style scoped>
+html, body {
+  overflow-x: hidden; /* 禁止横向滚动 */
+  margin: 0;
+  padding: 0;
+  width: 100vw; /* 保证页面宽度与视口一致 */
+}
 .anim-container {
   width: 100%;
+  max-width: 100vw; /* 限制容器的最大宽度 */
+  overflow: hidden;  /* 禁止内容超出容器时触发滚动 */
   height: 264px;
   border: 1px solid #00000000;
   background-color: #FFFFFF;
