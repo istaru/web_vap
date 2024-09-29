@@ -10,10 +10,10 @@
 
 <script>
 import Vap from '../../../dist/vap.js'
-import demoConfig from './demo1.json'
-import demo2Config from './demo2.json'
-const demoMp4 = require('./demo1.mp4')
-const demo2Mp4 = require('./demo2.mp4')
+// import demoConfig from './demo1.json'
+// import demo2Config from './demo2.json'
+// const demoMp4 = require('./demo1.mp4')
+// const demo2Mp4 = require('./demo2.mp4')
 var TAG = 'vue端log：'
 
 export default {
@@ -23,16 +23,9 @@ export default {
       vap: null,
       access: true,
       isOnPause: false,
-      url: demoMp4,
-      config: demoConfig,
-      fusionInfo: {
-        // 融合信息（图片/文字）,同素材生成工具生成的配置文件中的srcTag所对应，比如[imgUser] => imgUser
-        imgUser: '//shp.qlogo.cn/pghead/Q3auHgzwzM6TmnCKHzBcyxVPEJ5t4Ria7H18tYJyM40c/0',
-        imgAnchor: '//shp.qlogo.cn/pghead/PiajxSqBRaEKRa1v87G8wh37GibiaosmfU334GBWgk7aC8/140',
-        textUser: 'demo1 textUser',
-        textAnchor: 'demo1 textAnchor',
-        type: 2
-      }
+      url: '',
+      config: {},
+      fusionInfo: {}
     }
   },
   created () {
@@ -46,6 +39,10 @@ export default {
   methods: {
     handleFlutterData (event) {
       console.log(TAG, '接收的参数为：', event)
+      const parsedData = JSON.parse(event) // 解析接收到的JSON字符串
+      // 更新状态
+      this.url = parsedData.demo1Mp4 // 设置视频链接
+      this.config = parsedData.demo1Json // 设置配置文件
     },
     getPlayParams () {
       return {
@@ -88,12 +85,12 @@ export default {
           const endTime = performance.now()
           const duration = endTime - startTime
           console.log(TAG, '动画耗时：', duration, '毫秒')
-          if (type !== 'demo2') {
-            this.changeConfig(demo2Mp4, demo2Config, 'demo2 textUser', 'demo2 textAnchor')
-            this.play(flag, 'demo2')
-          } else {
-            this.changeConfig(demoMp4, demoConfig, 'demo1 textUser', 'demo1 textAnchor')
-          }
+          // if (type !== 'demo2') {
+          //   this.changeConfig(demo2Mp4, demo2Config, 'demo2 textUser', 'demo2 textAnchor')
+          //   this.play(flag, 'demo2')
+          // } else {
+          //   this.changeConfig(demoMp4, demoConfig, 'demo1 textUser', 'demo1 textAnchor')
+          // }
         })
         .on('frame', (frame, timestamp) => {
           // frame: 当前帧(从0开始)  timestamp: (播放时间戳)
