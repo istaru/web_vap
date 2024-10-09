@@ -32,18 +32,40 @@ export default {
     this.vap = new Vap()
   },
   mounted () {
-    window.handleFlutterData = this.handleFlutterData
+    console.log('Component mounted')
+    setTimeout(() => {
+      this.initializeFlutterWebView()
+    }, 1000)
+    // window.handleFlutterData = this.handleFlutterData
     // 网页加载完毕时，自动调用 play 方法
     this.play(0) // 传入参数 0 表示无融合播放
   },
   methods: {
-    handleFlutterData (event) {
-      console.log(TAG, '接收的参数为：', event)
-      const parsedData = JSON.parse(event) // 解析接收到的JSON字符串
-      // 更新状态
-      this.url = parsedData.demo1Mp4 // 设置视频链接
-      this.config = parsedData.demo1Json // 设置配置文件
+    initializeFlutterWebView () {
+      console.log('Initializing Flutter WebView')
+      if (window.flutter_inappwebview) {
+        console.log('flutter_inappwebview is available')
+        if (window.flutter_inappwebview.callHandler) {
+          console.log('callHandler is available')
+          window.flutter_inappwebview.callHandler('handlerFoo').then((result) => {
+            console.log('handlerFoo', JSON.stringify(result))
+            window.flutter_inappwebview.callHandler('handlerFooWithArgs', 1, true, ['bar', 5], {foo: 'baz'}, result)
+          })
+        } else {
+          console.error('callHandler is not available')
+        }
+      } else {
+        console.error('flutter_inappwebview is not available')
+      }
     },
+    // handleFlutterData (event) {
+    //   alert(JSON.stringify(event))
+    //   const parsedData = JSON.parse(event) // 解析接收到的JSON字符串
+    //   console.log(TAG, '接收的参数为：', parsedData)
+    //   // 更新状态
+    //   this.url = parsedData.demo1Mp4 // 设置视频链接
+    //   this.config = parsedData.demo1Json // 设置配置文件
+    // },
     getPlayParams () {
       return {
         container: this.$refs.anim,
