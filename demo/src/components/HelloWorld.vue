@@ -1,53 +1,58 @@
 <template>
   <div>
     <div ref="anim" class="anim-container"></div>
-    <button :class="[!access && 'disable']" @click.stop="play(0)">播放</button>
-    <!-- <button :class="[!access && 'disable']" @click.stop="play(1)">play(有融合)</button> -->
-    <button v-if="vap" @click.stop="pause()">暂停/继续</button>
-    <!-- <button v-if="vap" @click.stop="playContinue()">resume</button> -->
+    <button :class="[!access && 'disable']" @click.stop="play(0)">play(无融合)</button>
+    <button :class="[!access && 'disable']" @click.stop="play(1)">play(有融合)</button>
+    <button v-if="vap" @click.stop="playContinue()">continue</button>
+    <button v-if="vap" @click.stop="pause()">pause</button>
   </div>
 </template>
 
 <script>
 import Vap from '../../../dist/vap.js'
-// import demoConfig from './demo1.json'
-// import demo2Config from './demo2.json'
-// const demoMp4 = require('./demo1.mp4')
-// const demo2Mp4 = require('./demo2.mp4')
 var TAG = 'vue端log：'
 
 export default {
   name: 'vap',
+  props: {
+    demoConfig: Object,
+    demo2Config: Object,
+    demoMp4: String,
+    demo2Mp4: String
+  },
   data () {
     return {
       vap: null,
       access: true,
-      isOnPause: false,
-      url: '',
-      config: {},
-      fusionInfo: {}
+      url: this.demoMp4,
+      config: this.demoConfig,
+      fusionInfo: {
+        // 融合信息（图片/文字）,同素材生成工具生成的配置文件中的srcTag所对应，比如[imgUser] => imgUser
+        imgUser: '//shp.qlogo.cn/pghead/Q3auHgzwzM6TmnCKHzBcyxVPEJ5t4Ria7H18tYJyM40c/0',
+        imgAnchor: '//shp.qlogo.cn/pghead/PiajxSqBRaEKRa1v87G8wh37GibiaosmfU334GBWgk7aC8/140',
+        textUser: 'demo1 textUser',
+        textAnchor: 'demo1 textAnchor',
+        type: 2
+      }
     }
   },
   created () {
+    window.sendData = this.sendData.bind(this)
     this.vap = new Vap()
   },
-  mounted () {
-    window.fromFlutter = function (message) {
+  methods: {
+    sendData (data) {
+      console.log(TAG, '接收flutter参数：', data)
       try {
-        console.log(TAG, '接收flutter参数：', message)
-        const parsedData = JSON.parse(message) // 解析接收到的JSON字符串
-        console.log(TAG, '解析视频结果：', parsedData.demo1Mp4)
-        console.log(TAG, '解析数据结果：', parsedData.demo1Json)
-        // 更新状态
-        this.url = parsedData.demo1Mp4 // 设置视频链接
-        this.config = parsedData.demo1Json // 设置配置文件
+        const parsedData = JSON.parse(data) // 解析接收到的JSON字符串
+        this.config = parsedData.demo1Json
+        this.demo2Config = parsedData.demo2Json
+        this.url = parsedData.demo1Mp4
+        this.demo2Mp4 = parsedData.demo2Mp4
       } catch (error) {
         console.error(TAG, '解析错误：', error)
       }
-    }
-    this.play(0) // 传入参数 0 表示无融合播放
-  },
-  methods: {
+    },
     getPlayParams () {
       return {
         container: this.$refs.anim,
@@ -55,10 +60,10 @@ export default {
         src: this.url,
         // 素材配置json对象
         config: this.config,
-        width: 924 / 1.5,
-        height: 492 / 1.5,
+        width: 900,
+        height: 400,
         // 同素材生成工具中配置的保持一致
-        fps: 30,
+        fps: 20,
         // 是否循环
         loop: false,
         // 起始播放时间点
@@ -72,50 +77,40 @@ export default {
       if (!this.access) {
         return
       }
+      // 确保参数已正确初始化
+      if (!this.url || !this.config || !this.$refs.anim) {
+        console.error(TAG, '参数出错：src(视频地址)、config(配置文件地址)、container(dom容器)')
+        return
+      }
       const that = this
       const params = this.getPlayParams()
-      // 记录开始播放时间
-      const startTime = performance.now()
+      // 检查 vap 实例状态
+      if (!this.vap) {
+        this.vap = new Vap()
+      }
       this.vap.play(Object.assign({}, params, flag ? this.fusionInfo : {type: 1}))
         .on('playing', () => {
           that.access = false
-          // console.log('playing')
+          console.log('playing')
         })
         .on('ended', () => {
           that.access = true
           // this.vap = null
-          // console.log('play ended')
-          // 记录结束播放时间
-          const endTime = performance.now()
-          const duration = endTime - startTime
-          console.log(TAG, '动画耗时：', duration, '毫秒')
-          // if (type !== 'demo2') {
-          //   this.changeConfig(demo2Mp4, demo2Config, 'demo2 textUser', 'demo2 textAnchor')
-          //   this.play(flag, 'demo2')
-          // } else {
-          //   this.changeConfig(demoMp4, demoConfig, 'demo1 textUser', 'demo1 textAnchor')
-          // }
+          console.log('play ended')
+          if (type !== 'demo2') {
+            this.changeConfig(this.demo2Mp4, this.demo2Config, 'demo2 textUser', 'demo2 textAnchor')
+            this.play(flag, 'demo2')
+          } else {
+            this.changeConfig(this.demoMp4, this.demoConfig, 'demo1 textUser', 'demo1 textAnchor')
+          }
         })
         .on('frame', (frame, timestamp) => {
           // frame: 当前帧(从0开始)  timestamp: (播放时间戳)
-          if (frame === 200) {
-            // do something
-          }
-          // console.log(frame, '-------', timestamp)
         })
       window.vap = this.vap
     },
     pause () {
-      if (this.access) {
-        return
-      }
-      if (this.isOnPause) {
-        this.isOnPause = false
-        this.vap.play()
-      } else {
-        this.isOnPause = true
-        this.vap.pause()
-      }
+      this.vap.pause()
     },
     playContinue () {
       this.vap.play()
@@ -138,26 +133,14 @@ export default {
 
 <!-- Add "scoped" attribute to limit CSS to this component only -->
 <style scoped>
-html, body {
-  overflow-x: hidden; /* 禁止横向滚动 */
-  margin: 0;
-  padding: 0;
-  width: 100vw; /* 保证页面宽度与视口一致 */
-}
 .anim-container {
-  width: 100%;
-  max-width: 100vw; /* 限制容器的最大宽度 */
-  overflow: hidden;  /* 禁止内容超出容器时触发滚动 */
-  height: 264px;
-  border: 1px solid #00000000;
-  background-color: #FFFFFF;
+  width: 900px;
+  height: 600px;
+  border: 1px solid #cccccc;
   margin: auto;
-  margin-bottom: 60px;
+  margin-bottom: 20px;
 }
-button.disable {
-  height: 100%;
-  background: gray;
-  display: block;
-  margin: 0 auto;
-}
+  button.disable {
+    background: gray;
+  }
 </style>
