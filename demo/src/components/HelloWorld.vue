@@ -40,6 +40,10 @@ export default {
     window.sendData = this.sendData.bind(this)
     this.vap = new Vap()
   },
+  mounted () {
+    // 自动播放视频
+    this.play(0)
+  },
   methods: {
     sendData (data) {
       console.log(TAG, '接收flutter参数：', data)
